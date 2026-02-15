@@ -1,27 +1,21 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Astra AI</title>
+    <title>Astra AI Portal</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
 
-    <div class="header">
-        <h1>🌌 Astra AI</h1>
-        <p>Autonomous Space Intelligence Platform</p>
-    </div>
+<h1>🌌 Astra AI Public Space Portal</h1>
 
-    <div class="controls">
-        <button onclick="loadPlanets()">Load Ranked Exoplanets</button>
+<div class="search-container">
+    <input id="searchBox" placeholder="Search exoplanet..." />
+    <button onclick="searchPlanet()">Search</button>
+    <button onclick="loadTop()">Top Ranked</button>
+</div>
 
-        <input id="searchBox" placeholder="Search planet..." />
-        <button onclick="searchPlanet()">Search</button>
-    </div>
+<div id="results"></div>
 
-    <div id="loading" class="hidden">Loading...</div>
-    <div id="error" class="error hidden"></div>
-    <div id="results"></div>
-
-    <script src="/static/app.js"></script>
+<script src="/static/app.js"></script>
 </body>
 </html>
