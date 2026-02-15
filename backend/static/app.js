@@ -1,88 +1,40 @@
-const loading = document.getElementById("loading");
-const results = document.getElementById("results");
-const errorBox = document.getElementById("error");
-
-function showLoading(state) {
-    loading.classList.toggle("hidden", !state);
-}
-
-function showError(message) {
-    errorBox.textContent = message;
-    errorBox.classList.remove("hidden");
-}
-
-function clearError() {
-    errorBox.classList.add("hidden");
-    errorBox.textContent = "";
-}
-
-function displayResults(planets) {
-    results.innerHTML = "";
+function display(planets) {
+    let html = "";
 
     if (!planets || planets.length === 0) {
-        results.innerHTML = "<p>No results found.</p>";
-        return;
+        html = "<p>No results found.</p>";
+    } else {
+        planets.forEach(p => {
+            html += `
+                <div class="card">
+                    <h3>${p.name}</h3>
+                    <p>Habitability Score: ${p.habitability_score}</p>
+                    <button onclick="viewObject('${p.name}')">
+                        View Details
+                    </button>
+                </div>
+            `;
+        });
     }
 
-    planets.forEach(p => {
-        const card = document.createElement("div");
-        card.className = "card";
-
-        card.innerHTML = `
-            <h3>${p.name}</h3>
-            <p><strong>Host Star:</strong> ${p.host_star || "Unknown"}</p>
-            <p><strong>Habitability Score:</strong> ${p.habitability_score}</p>
-        `;
-
-        results.appendChild(card);
-    });
+    document.getElementById("results").innerHTML = html;
 }
 
-async function loadPlanets() {
-    clearError();
-    showLoading(true);
-
-    try {
-        const res = await fetch('/astra/exoplanets?limit=10');
-
-        if (!res.ok) {
-            throw new Error("Server error");
-        }
-
-        const data = await res.json();
-        displayResults(data);
-
-    } catch (err) {
-        showError("Space database may be waking up. Please try again in 30 seconds.");
-    }
-
-    showLoading(false);
-}
-
-async function searchPlanet() {
-    clearError();
-    showLoading(true);
-
+function searchPlanet() {
     const query = document.getElementById("searchBox").value;
+    if (!query) return;
 
-    if (!query) {
-        showLoading(false);
-        return;
-    }
+    fetch(`/astra/search?q=${query}`)
+    .then(res => res.json())
+    .then(data => display(data));
+}
 
-    try {
-        const res = await fetch(`/astra/search?q=${query}`);
+function loadTop() {
+    fetch(`/astra/exoplanets?limit=10`)
+    .then(res => res.json())
+    .then(data => display(data));
+}
 
-        if (!res.ok) {
-            throw new Error("Server error");
-        }
-
-        const data = await res.json();
-        displayResults(data);
-
-    } catch (err) {
-        showError("Search failed. Try again.");
-    }
-
-    showLoading(false);
+function viewObject(name) {
+    window.location.href = `/static/object.html?name=${encodeURIComponent(name)}`;
 }
