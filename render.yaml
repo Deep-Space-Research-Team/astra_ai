@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: astra-ai
+    env: python
+    plan: free
+
+    buildCommand: |
+      pip install -r requirements.txt
+
+    startCommand: |
+      uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+
+    autoDeploy: true
