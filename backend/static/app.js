@@ -1,40 +1,35 @@
-function display(planets) {
-    let html = "";
-
-    if (!planets || planets.length === 0) {
-        html = "<p>No results found.</p>";
-    } else {
-        planets.forEach(p => {
-            html += `
-                <div class="card">
-                    <h3>${p.name}</h3>
-                    <p>Habitability Score: ${p.habitability_score}</p>
-                    <button onclick="viewObject('${p.name}')">
-                        View Details
-                    </button>
-                </div>
-            `;
-        });
-    }
-
-    document.getElementById("results").innerHTML = html;
+async function loadSuggestions() {
+    const res = await fetch('/suggestions');
+    const data = await res.json();
+    display(data, "suggestions");
 }
 
-function searchPlanet() {
-    const query = document.getElementById("searchBox").value;
+async function searchPlanet() {
+    const query = document.getElementById("searchInput").value;
     if (!query) return;
 
-    fetch(`/astra/search?q=${query}`)
-    .then(res => res.json())
-    .then(data => display(data));
+    const res = await fetch(`/search?q=${query}`);
+    const data = await res.json();
+    display(data, "results");
 }
 
-function loadTop() {
-    fetch(`/astra/exoplanets?limit=10`)
-    .then(res => res.json())
-    .then(data => display(data));
+function display(planets, elementId) {
+    const container = document.getElementById(elementId);
+    container.innerHTML = "";
+
+    planets.forEach(p => {
+        const card = document.createElement("div");
+        card.className = "card";
+
+        card.innerHTML = `
+            <h3>${p.name}</h3>
+            <p><strong>Star:</strong> ${p.host_star || "Unknown"}</p>
+            <p><strong>Radius:</strong> ${p.radius_earth || "?"} Earth</p>
+            <span class="badge">${p.classification || "Unknown"}</span>
+        `;
+
+        container.appendChild(card);
+    });
 }
 
-function viewObject(name) {
-    window.location.href = `/static/object.html?name=${encodeURIComponent(name)}`;
-}
+loadSuggestions();
