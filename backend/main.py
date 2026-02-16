@@ -54,12 +54,34 @@ def health_head():
 
 @app.get("/dashboard")
 def dashboard():
-    summary = requests.get(f"{SPACE_DB_URL}/research/summary").json()
-    asteroids = requests.get(f"{SPACE_DB_URL}/asteroids/today").json()
+    try:
+        summary_res = requests.get(
+            f"{SPACE_DB_URL}/research/summary",
+            timeout=30
+        )
+        summary_res.raise_for_status()
+        summary = summary_res.json()
 
-    hazardous = [a for a in asteroids if a["hazardous"]]
+        asteroid_res = requests.get(
+            f"{SPACE_DB_URL}/asteroids/today",
+            timeout=30
+        )
+        asteroid_res.raise_for_status()
+        asteroids = asteroid_res.json()
 
-    return {
-        "summary": summary,
-        "hazardous_asteroids_today": hazardous[:5]
-    }
+        hazardous = [
+            a for a in asteroids
+            if a.get("hazardous")
+        ]
+
+        return {
+            "summary": summary if isinstance(summary, dict) else {},
+            "hazardous_asteroids_today": hazardous[:5]
+        }
+
+    except Exception:
+        return {
+            "summary": {},
+            "hazardous_asteroids_today": []
+        }
+
