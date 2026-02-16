@@ -1,14 +1,14 @@
 import os
 import requests
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import FileResponse
 
-SPACE_DB_URL = os.getenv(
-    "SPACE_DB_URL",
-    "https://space-object-database.onrender.com"
-)
+SPACE_DB_URL = os.getenv("SPACE_DB_URL")
+
+if not SPACE_DB_URL:
+    raise RuntimeError("SPACE_DB_URL not set")
 
 app = FastAPI(title="Astra AI")
 
@@ -21,9 +21,9 @@ app.add_middleware(
 
 app.mount("/static", StaticFiles(directory="backend/static"), name="static")
 
-# ==========================================
-# HEALTH
-# ==========================================
+@app.get("/")
+def home():
+    return FileResponse("backend/static/index.html")
 
 @app.get("/health")
 def health():
@@ -33,39 +33,31 @@ def health():
 def health_head():
     return Response(status_code=200)
 
-# ==========================================
-# ROOT
-# ==========================================
-
-@app.get("/")
-def home():
-    return FileResponse("backend/static/index.html")
-
-# ==========================================
-# SEARCH
-# ==========================================
+@app.get("/suggestions")
+def suggestions():
+    try:
+        r = requests.get(
+            f"{SPACE_DB_URL}/exoplanets?limit=10",
+            timeout=30
+        )
+        r.raise_for_status()
+        return r.json()
+    except Exception as e:
+        return {"error": str(e)}
 
 @app.get("/search")
 def search(q: str = Query(...)):
-    r = requests.get(
-        f"{SPACE_DB_URL}/exoplanets?limit=100"
-    )
-    data = r.json()
+    try:
+        r = requests.get(
+            f"{SPACE_DB_URL}/exoplanets?limit=100",
+            timeout=30
+        )
+        r.raise_for_status()
+        data = r.json()
 
-    filtered = [
-        p for p in data
-        if q.lower() in (p.get("name") or "").lower()
-    ]
-
-    return filtered
-
-# ==========================================
-# SUGGESTIONS
-# ==========================================
-
-@app.get("/suggestions")
-def suggestions():
-    r = requests.get(
-        f"{SPACE_DB_URL}/exoplanets?limit=10"
-    )
-    return r.json()
+        return [
+            p for p in data
+            if q.lower() in (p.get("name") or "").lower()
+        ]
+    except Exception as e:
+        return {"error": str(e)}
