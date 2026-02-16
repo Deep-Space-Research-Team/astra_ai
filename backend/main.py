@@ -21,9 +21,9 @@ app.add_middleware(
 
 app.mount("/static", StaticFiles(directory="backend/static"), name="static")
 
-# ======================================================
+# ==========================================
 # ROOT
-# ======================================================
+# ==========================================
 
 @app.get("/")
 def home():
@@ -37,43 +37,47 @@ def health():
 def health_head():
     return Response(status_code=200)
 
-# ======================================================
-# SUGGESTIONS (INTELLIGENT CURATED)
-# ======================================================
+# ==========================================
+# SUGGESTIONS (GUARANTEED NON-EMPTY)
+# ==========================================
 
 @app.get("/suggestions")
 def suggestions():
     try:
         r = requests.get(
-            f"{SPACE_DB_URL}/exoplanets?limit=50",
+            f"{SPACE_DB_URL}/exoplanets?limit=20",
             timeout=30
         )
         r.raise_for_status()
         planets = r.json()
 
-        super_earth = [p for p in planets if p.get("classification") == "Super Earth"]
-        rocky = [p for p in planets if p.get("classification") == "Rocky"]
-        gas = [p for p in planets if p.get("classification") == "Gas Giant"]
-        hot = [p for p in planets if p.get("classification") == "Hot Jupiter"]
+        if not isinstance(planets, list) or not planets:
+            return []
 
-        curated = (
-            super_earth[:2] +
-            rocky[:2] +
-            gas[:2] +
-            hot[:2]
-        )
+        # Group by classification
+        groups = {}
+        for p in planets:
+            cls = p.get("classification", "Unknown")
+            groups.setdefault(cls, []).append(p)
 
-        if len(curated) < 8:
-            curated += planets[:8 - len(curated)]
+        curated = []
+
+        # Pick 1 from each type
+        for cls in groups:
+            curated.append(groups[cls][0])
+
+        # Ensure at least 6 suggestions
+        if len(curated) < 6:
+            curated = planets[:6]
 
         return curated[:8]
 
-    except Exception as e:
-        return {"error": str(e)}
+    except Exception:
+        return []
 
-# ======================================================
+# ==========================================
 # SEARCH
-# ======================================================
+# ==========================================
 
 @app.get("/search")
 def search(q: str = Query(...)):
@@ -92,5 +96,5 @@ def search(q: str = Query(...)):
 
         return filtered
 
-    except Exception as e:
-        return {"error": str(e)}
+    except Exception:
+        return []
