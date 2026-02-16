@@ -1,21 +1,30 @@
 document.addEventListener("DOMContentLoaded", () => {
+    createModal();
     loadSuggestions();
 
-    const button = document.getElementById("searchButton");
-    if (button) {
-        button.addEventListener("click", searchPlanet);
+    const searchBtn = document.getElementById("searchButton");
+    if (searchBtn) {
+        searchBtn.addEventListener("click", searchPlanet);
     }
 });
+
+/* ===============================
+   LOAD SUGGESTIONS
+================================= */
 
 async function loadSuggestions() {
     try {
         const res = await fetch('/suggestions');
         const data = await res.json();
-        display(data, "suggestions", true);
+        renderCards(data, "suggestions");
     } catch (err) {
-        console.error("Suggestion load failed:", err);
+        console.error("Suggestions failed:", err);
     }
 }
+
+/* ===============================
+   SEARCH
+================================= */
 
 async function searchPlanet() {
     const input = document.getElementById("searchInput");
@@ -27,14 +36,18 @@ async function searchPlanet() {
     try {
         const res = await fetch(`/search?q=${encodeURIComponent(query)}`);
         const data = await res.json();
-        display(data, "results", false);
+        renderCards(data, "results");
     } catch (err) {
         console.error("Search failed:", err);
     }
 }
 
-function display(planets, elementId, isSuggestion) {
-    const container = document.getElementById(elementId);
+/* ===============================
+   RENDER CARDS
+================================= */
+
+function renderCards(planets, containerId) {
+    const container = document.getElementById(containerId);
     container.innerHTML = "";
 
     if (!Array.isArray(planets) || planets.length === 0) {
@@ -49,10 +62,54 @@ function display(planets, elementId, isSuggestion) {
         card.innerHTML = `
             <h3>${p.name || "Unknown"}</h3>
             <p><strong>Star:</strong> ${p.host_star || "Unknown"}</p>
-            <p><strong>Radius:</strong> ${p.radius_earth || "?"} Earth</p>
+            <p><strong>Radius:</strong> ${p.radius_earth ?? "?"} Earth</p>
             <span class="badge">${p.classification || "Unknown"}</span>
         `;
 
+        card.addEventListener("click", () => openModal(p));
         container.appendChild(card);
     });
+}
+
+/* ===============================
+   MODAL
+================================= */
+
+function createModal() {
+    const modal = document.createElement("div");
+    modal.id = "planetModal";
+    modal.innerHTML = `
+        <div class="modal-content">
+            <span id="closeModal">&times;</span>
+            <div id="modalBody"></div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    document.getElementById("closeModal").onclick = closeModal;
+
+    modal.addEventListener("click", function (e) {
+        if (e.target === modal) {
+            closeModal();
+        }
+    });
+}
+
+function openModal(planet) {
+    const modal = document.getElementById("planetModal");
+    const body = document.getElementById("modalBody");
+
+    body.innerHTML = `
+        <h2>${planet.name}</h2>
+        <p><strong>Host Star:</strong> ${planet.host_star || "Unknown"}</p>
+        <p><strong>Radius:</strong> ${planet.radius_earth ?? "?"} Earth</p>
+        <p><strong>Mass:</strong> ${planet.mass_earth ?? "?"} Earth</p>
+        <p><strong>Classification:</strong> ${planet.classification || "Unknown"}</p>
+    `;
+
+    modal.style.display = "flex";
+}
+
+function closeModal() {
+    document.getElementById("planetModal").style.display = "none";
 }
