@@ -7,7 +7,7 @@ from fastapi.responses import FileResponse
 
 SPACE_DB_URL = os.getenv("SPACE_DB_URL")
 
-app = FastAPI(title="Astra AI")
+app = FastAPI(title="DeepSpace Intelligence")
 
 app.add_middleware(
     CORSMiddleware,
