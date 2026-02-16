@@ -51,3 +51,15 @@ def health():
 @app.head("/health")
 def health_head():
     return Response(status_code=200)
+
+@app.get("/dashboard")
+def dashboard():
+    summary = requests.get(f"{SPACE_DB_URL}/research/summary").json()
+    asteroids = requests.get(f"{SPACE_DB_URL}/asteroids/today").json()
+
+    hazardous = [a for a in asteroids if a["hazardous"]]
+
+    return {
+        "summary": summary,
+        "hazardous_asteroids_today": hazardous[:5]
+    }
