@@ -21,9 +21,9 @@ app.add_middleware(
 
 app.mount("/static", StaticFiles(directory="backend/static"), name="static")
 
-# ==========================================
+# =====================================================
 # ROOT
-# ==========================================
+# =====================================================
 
 @app.get("/")
 def home():
@@ -37,9 +37,22 @@ def health():
 def health_head():
     return Response(status_code=200)
 
-# ==========================================
-# SUGGESTIONS (GUARANTEED NON-EMPTY)
-# ==========================================
+# =====================================================
+# NORMALIZE FUNCTION
+# =====================================================
+
+def normalize_planet(p):
+    return {
+        "name": p.get("name") or p.get("pl_name") or "Unknown",
+        "host_star": p.get("host_star") or p.get("hostname") or "Unknown",
+        "radius_earth": p.get("radius_earth") or p.get("pl_rade"),
+        "mass_earth": p.get("mass_earth") or p.get("pl_bmasse"),
+        "classification": p.get("classification") or "Unknown"
+    }
+
+# =====================================================
+# SUGGESTIONS
+# =====================================================
 
 @app.get("/suggestions")
 def suggestions():
@@ -51,33 +64,16 @@ def suggestions():
         r.raise_for_status()
         planets = r.json()
 
-        if not isinstance(planets, list) or not planets:
-            return []
+        normalized = [normalize_planet(p) for p in planets]
 
-        # Group by classification
-        groups = {}
-        for p in planets:
-            cls = p.get("classification", "Unknown")
-            groups.setdefault(cls, []).append(p)
-
-        curated = []
-
-        # Pick 1 from each type
-        for cls in groups:
-            curated.append(groups[cls][0])
-
-        # Ensure at least 6 suggestions
-        if len(curated) < 6:
-            curated = planets[:6]
-
-        return curated[:8]
+        return normalized[:8]
 
     except Exception:
         return []
 
-# ==========================================
+# =====================================================
 # SEARCH
-# ==========================================
+# =====================================================
 
 @app.get("/search")
 def search(q: str = Query(...)):
@@ -89,12 +85,12 @@ def search(q: str = Query(...)):
         r.raise_for_status()
         planets = r.json()
 
-        filtered = [
-            p for p in planets
-            if q.lower() in (p.get("name") or "").lower()
-        ]
+        normalized = [normalize_planet(p) for p in planets]
 
-        return filtered
+        return [
+            p for p in normalized
+            if q.lower() in p["name"].lower()
+        ]
 
     except Exception:
         return []
