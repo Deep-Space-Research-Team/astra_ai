@@ -1,20 +1,28 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Astra AI Portal</title>
+    <title>Astra AI</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
 
-<h1>🌌 Astra AI Public Space Portal</h1>
+<div class="container">
 
-<div class="search-container">
-    <input id="searchBox" placeholder="Search exoplanet..." />
-    <button onclick="searchPlanet()">Search</button>
-    <button onclick="loadTop()">Top Ranked</button>
+    <h1>🌌 Astra AI</h1>
+    <p class="subtitle">Live NASA Space Intelligence</p>
+
+    <div class="search-box">
+        <input id="searchInput" placeholder="Search planet..." />
+        <button onclick="searchPlanet()">Search</button>
+    </div>
+
+    <h2>🌍 Suggested Worlds</h2>
+    <div id="suggestions" class="grid"></div>
+
+    <h2>🔎 Results</h2>
+    <div id="results" class="grid"></div>
+
 </div>
-
-<div id="results"></div>
 
 <script src="/static/app.js"></script>
 </body>
